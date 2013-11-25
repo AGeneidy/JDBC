@@ -19,27 +19,33 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import DBMS.RecordSet;
 
 
 public class JDBCResultSet implements ResultSet{
 	
+	RecordSet records;
+	int currentIndex = -1;
+
 
 	@Override
 	public boolean absolute(int row) throws SQLException {
-		// TODO Auto-generated method stub
+		if(row > -1 && row < records.size())
+		{
+			currentIndex = row;
+			return true;
+		}
 		return false;
 	}
 
 	@Override
 	public void afterLast() throws SQLException {
-		// TODO Auto-generated method stub
-		
+		currentIndex = records.size();
 	}
 
 	@Override
 	public void beforeFirst() throws SQLException {
-		// TODO Auto-generated method stub
-		
+		currentIndex = -1;
 	}
 
 	@Override
@@ -56,7 +62,10 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public boolean first() throws SQLException {
-		// TODO Auto-generated method stub
+		if(records.size() > 0){
+			currentIndex = 0;
+			return true;
+		}
 		return false;
 	}
 
@@ -176,14 +185,12 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public boolean isAfterLast() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return currentIndex == records.size();
 	}
 
 	@Override
 	public boolean isBeforeFirst() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return currentIndex == -1;
 	}
 
 	@Override
@@ -194,31 +201,36 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public boolean isFirst() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return currentIndex == 0;
 	}
 
 	@Override
 	public boolean isLast() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return currentIndex == records.size()-1;
 	}
 
 	@Override
 	public boolean last() throws SQLException {
-		// TODO Auto-generated method stub
+		if(records.size() > 0){
+			currentIndex = records.size()-1;
+			return true;
+		}
 		return false;
 	}
 
 	@Override
 	public boolean next() throws SQLException {
-		// TODO Auto-generated method stub
+		if( ++currentIndex < records.size() )
+			return true;
+		currentIndex = records.size();
 		return false;
 	}
 
 	@Override
 	public boolean previous() throws SQLException {
-		// TODO Auto-generated method stub
+		if( --currentIndex >= 0 )
+			return true;
+		currentIndex = -1;
 		return false;
 	}
 	
