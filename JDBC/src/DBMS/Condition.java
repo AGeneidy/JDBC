@@ -8,18 +8,14 @@ public class Condition {
 	String condition;
 	Table table;
 
-	public String toString() {
-		return condition;
-	}
-
 	public Condition(String cond, Table t) {
-		condition = cond.replace(" ", "");
+		condition = cond.replace(" ", "").replace("AND", "&").replace("OR", "|").replace("NOT", "!");
 		table = t;
 	}
 
 	public boolean meetsCondition(Record rec) {
 		String substitute = new String(condition);
-
+		
 		for(int i = 0; i<condition.length(); i++){
 			int j = i;
 			String simpleCond = "";
@@ -45,10 +41,6 @@ public class Condition {
 				i = j;
 			}
 		}
-
-if(substitute!=null)
-System.out.println(substitute + " -> " + 
-(valueOfExplicitExp(substitute)? "T":"F"));
 
 		return valueOfExplicitExp(substitute);
 		

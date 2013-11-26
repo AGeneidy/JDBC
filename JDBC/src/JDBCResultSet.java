@@ -27,7 +27,6 @@ public class JDBCResultSet implements ResultSet{
 	RecordSet records;
 	int currentIndex = -1;
 
-
 	@Override
 	public boolean absolute(int row) throws SQLException {
 		if(row > -1 && row < records.size())
@@ -179,8 +178,7 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public String getString(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return columnLabel;
 	}
 
 	@Override
