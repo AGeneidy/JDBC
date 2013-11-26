@@ -1,9 +1,9 @@
 package DBMS;
 
-import java.util.HashSet;
+import java.util.Vector;
 
 @SuppressWarnings("serial")
-public class RecordSet extends HashSet<Record>{		//changed from hashset to vector
+public class RecordSet extends Vector<Record>{		//changed from hashset to vector
 
 	private String[] attributesNames;
 
