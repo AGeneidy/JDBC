@@ -29,12 +29,16 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public boolean absolute(int row) throws SQLException {
-		if(row > -1 && row < records.size())
-		{
-			currentIndex = row;
-			return true;
+		if(row > records.size()){
+			currentIndex = records.size();
+			return false;
 		}
-		return false;
+		if(row < -records.size() || row==0){
+			currentIndex = -1;
+			return false;
+		}
+		currentIndex = (row>0)? row-1 : records.size()+row;
+		return true;
 	}
 
 	@Override
@@ -46,7 +50,6 @@ public class JDBCResultSet implements ResultSet{
 	public void beforeFirst() throws SQLException {
 		currentIndex = -1;
 	}
-
 	@Override
 	public void close() throws SQLException {
 		// TODO Auto-generated method stub
@@ -76,38 +79,65 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public boolean getBoolean(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Boolean)
+			return (Boolean)o;
+
+		throw new SQLException("Column is not of type Boolean");
 	}
 
 	@Override
 	public boolean getBoolean(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Boolean)
+			return (Boolean)o;
+
+		throw new SQLException("Column is not of type Boolean");
 	}
 
 	@Override
 	public Date getDate(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Date)
+			return (Date)o;
+
+		throw new SQLException("Column is not of type Date");
 	}
 
 	@Override
 	public Date getDate(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Date)
+			return (Date)o;
+
+		throw new SQLException("Column is not of type Date");
 	}
 
 	@Override
 	public double getDouble(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Double)
+			return (Double)o;
+
+		throw new SQLException("Column is not of type Double");
 	}
 
 	@Override
 	public double getDouble(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Double)
+			return (Double)o;
+
+		throw new SQLException("Column is not of type Double");
 	}
 
 	@Override
@@ -118,38 +148,65 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public float getFloat(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Float)
+			return (Float)o;
+
+		throw new SQLException("Column is not of type Float");
 	}
 
 	@Override
 	public float getFloat(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Float)
+			return (Float)o;
+
+		throw new SQLException("Column is not of type Float");
 	}
 
 	@Override
 	public int getInt(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Integer)
+			return (Integer)o;
+
+		throw new SQLException("Column is not of type Integer");
 	}
 
 	@Override
 	public int getInt(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Integer)
+			return (Integer)o;
+
+		throw new SQLException("Column is not of type Integer");
 	}
 
 	@Override
 	public long getLong(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof Long)
+			return (Long)o;
+
+		throw new SQLException("Column is not of type Long");
 	}
 
 	@Override
 	public long getLong(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof Long)
+			return (Long)o;
+
+		throw new SQLException("Column is not of type Long");
 	}
 
 	@Override
@@ -160,8 +217,10 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public Object getObject(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		return records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
 	}
 
 	@Override
@@ -172,13 +231,23 @@ public class JDBCResultSet implements ResultSet{
 
 	@Override
 	public String getString(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		if(columnIndex<0 || columnIndex>=records.getAttributesNames().length)
+			throw new SQLException("ColumnIndex is invalid");
+
+		Object o = records.get(currentIndex).getValue(records.getAttributeName(columnIndex));
+		if(o instanceof String)
+			return (String)o;
+
+		throw new SQLException("Column is not of type String");
 	}
 
 	@Override
 	public String getString(String columnLabel) throws SQLException {
-		return columnLabel;
+		Object o = records.get(currentIndex).getValue(columnLabel);
+		if(o instanceof String)
+			return (String)o;
+
+		throw new SQLException("Column is not of type String");
 	}
 
 	@Override
