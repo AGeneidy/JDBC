@@ -32,9 +32,9 @@ public class SimpleCondition {
 			(condition.contains("=")) ? condition.indexOf('=') : 1) ;
 		String op2;
 
-		if (condition.contains("\""))
+		if (condition.contains("\'"))
 			op2 = condition
-					.substring(condition.indexOf('\"') + 1, condition.lastIndexOf('\"'));
+					.substring(condition.indexOf('\'') + 1, condition.lastIndexOf('\''));
 		else
 			op2 = condition.substring(	1 + 
 				((condition.contains("=")) ? condition.indexOf('=') :
@@ -82,6 +82,8 @@ public class SimpleCondition {
 			return (comparisonResult == -1 || comparisonResult == 0);
 		else if (operator.contains(">="))
 			return (comparisonResult == 1 || comparisonResult == 0);
+		else if (operator.contains("!="))
+			return (comparisonResult == 1 || comparisonResult == -1);
 		else if (operator.contains("<"))
 			return (comparisonResult == -1);
 		else if (operator.contains(">"))
@@ -118,9 +120,9 @@ public class SimpleCondition {
 
 	private Object RHSConstValue(Object LHS) { // parse to same type as LHS
 		String op2;
-		if (condition.contains("\""))
-			op2 = condition.substring(condition.indexOf('\"') + 1,
-					condition.lastIndexOf('\"'));
+		if (condition.contains("\'"))
+			op2 = condition.substring(condition.indexOf('\'') + 1,
+					condition.lastIndexOf('\''));
 		else
 			op2 = condition.substring(	1 + 
 				((condition.contains("=")) ? condition.indexOf('=') :

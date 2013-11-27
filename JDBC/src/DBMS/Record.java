@@ -70,6 +70,11 @@ public class Record {
 		}
 	}
 	
+	public Record(Record record) {
+		table = record.table;
+		cells = new Hashtable<>(record.cells);
+	}
+
 	public Object getValue(String columnName) {
 		Object ret = cells.get(columnName);
 		if (ret == null || ret.equals("")) {
