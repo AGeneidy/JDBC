@@ -4,14 +4,11 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import DBMS.*;
-
-import DBMS.DBMS;
-
-import DBMS.DBMS;
 
 /**
  * The object used for executing a static SQL statement and returning the
@@ -26,16 +23,12 @@ import DBMS.DBMS;
  * @author OmarYousry
  * 
  */
-@SuppressWarnings("all")
 public class JDBCStatement implements Statement {
 
-	private static String intPat = "(-){0,1}[0-9]+";
-	private static String RealPat = "(-){0,1}[0-9]+(\\.){0,1}[0-9]+";
-	private static String stringPat = ".*";
-	private static String datePat = "[1-2]([0-9]){3}-((0[1-9])|1[0-2])-([0-2][1-9]|3[0-1])T([0-2][0-3])\\:([0-5][0-9])\\:([0-5][0-9])";
-	private static String booleanPat = "(((?i)true)|((?i)false))";
-
-	private static String operatorPat = "(\\*|\\<\\=|\\>\\=|\\=|\\<|\\>)";
+	
+	// Remember the problem of reserved words (set , from , where )
+	
+	private static String stringPat = "(.*)";
 
 	private static String nameReq = "([A-Za-z][A-Za-z0-9]*)";
 
@@ -48,12 +41,27 @@ public class JDBCStatement implements Statement {
 
 	private static String deletePat = "((?i)delete)\\s((?i)from)\\s" + nameReq;
 
-	private static String colValPat = "(" + nameReq + "\\s\\=\\s" + stringPat
-			+ ")";
+	private static String colValPat = nameReq + "\\s\\=\\s" + stringPat;
 
 	private static String updatePat = "((?i)update)\\s" + nameReq
 			+ "\\s((?i)set)\\s" + "(" + colValPat + "\\s\\,\\s" + ")*"
 			+ colValPat + "{1}";
+
+	private static String usePat = "((?i)use)\\s" + nameReq;
+
+	private static String createDatabasePat = "((?i)create)\\s((?i)database)\\s"
+			+ nameReq;
+
+	private static String column_Name_Type = nameReq + "\\s" + stringPat;
+
+	private static String createTablePat = "((?i)create)\\s((?i)table)\\s"
+			+ nameReq + "\\s\\(\\s" + "(" + column_Name_Type + "\\s,\\s" + ")*"
+			+ column_Name_Type + "{1}\\s\\)";
+
+	private static String insertIntoPat = "((?i)insert)\\s((?i)into)\\s"
+			+ nameReq + "\\s\\(\\s" + "(" + nameReq + "\\s\\,\\s" + ")*"
+			+ nameReq + "{1}\\s\\)\\s((?i)values)\\s\\(\\s" + "(" + stringPat
+			+ "," + ")*" + stringPat + "{1}\\s\\)";
 
 	/**
 	 * this specifies the time limit after which the query is stopped, measured
@@ -93,8 +101,8 @@ public class JDBCStatement implements Statement {
 	 */
 
 	public JDBCStatement(DBMS dbms, JDBCConnection c) throws SQLException {
-		if (dbms == null || c == null)
-			throw new SQLException("Error : Wrong Statement initialization");
+//		if (dbms == null || c == null)
+//			throw new SQLException("Error : Wrong Statement initialization");
 
 		connection = c;
 		this.dbms = dbms;
@@ -128,56 +136,6 @@ public class JDBCStatement implements Statement {
 		}
 	}
 
-	private void handleConditionedCommand(String sql) {
-		sql += " ";
-		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
-
-		if (sqlSplitted.length == 2) {
-			// THERE IS A COMMAND, AND A CONDITION
-
-			String command = sqlSplitted[0].trim();
-			String condition = sqlSplitted[1].trim();
-
-			if (command.matches(selectSpecificPat)) {
-				handleSelectCommand(sqlSplitted);
-			} else if (command.matches(updatePat)) {
-				handleUpdateCommand(sqlSplitted);
-			} else if (command.matches(deletePat)) {
-				handelDeleteCommand(sqlSplitted);
-			} else {
-
-			}
-		} else if (sqlSplitted.length == 1) {
-			// NO CONDITION WAS FOUND
-
-			String[] sqlSplitted2 = sql.split(" ");
-			String isWhere = sqlSplitted2[sqlSplitted2.length - 1];
-
-			if (isWhere.equalsIgnoreCase("where")) {
-				// ERROR : NO CONDITION AFTER WHERE
-			} else {
-				// UNCONDITIONED STATEMENT
-			}
-		} else {
-			// ERROR
-		}
-	}
-
-	private void handleSelectCommand(String[] sqlSplitted) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private void handleUpdateCommand(String[] sqlSplitted) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private void handelDeleteCommand(String[] sqlSplitted) {
-		// TODO Auto-generated method stub
-
-	}
-
 	/**
 	 * Executes the given SQL query (SELECT statement), which returns a single
 	 * ResultSet object.
@@ -185,23 +143,21 @@ public class JDBCStatement implements Statement {
 	@Override
 	public ResultSet executeQuery(String sql) throws SQLException {
 		try {
-
+			currentUpdateCount = -1;
 			sql = prepareSQLStatement(sql);
-
-			if (sql.matches(selectAllPat)) {
-				String[] sqlSplitted = sql.split("\\s((?i)from)\\s");
-
-				String tableName = sqlSplitted[1];
-
-				dbms.getUsedDB().getTable(tableName);
-
-				return null;
-			} else {
-				handleConditionedCommand(sql);
+			
+			try{
+				handleSelectComm(sql);
+			}catch (Exception e){
+				e.printStackTrace();
 			}
-			return null;
-		} catch (Exception e) {
+			
+			return currentResultSet;
+		} catch (SQLException e) {
 			throw new SQLException("ERROR : INVALID SQL STATEMENT");
+		} catch (NullPointerException e) {
+			throw new SQLException(
+					"ERROR : EITHER THE TABLE OR THE DATABASE DON'T EXIST");
 		}
 	}
 
@@ -214,16 +170,63 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public int executeUpdate(String sql) throws SQLException {
-
 		try {
-			sql = prepareSQLStatement(sql);
-		} catch (Exception e) {
-			throw new SQLException("ERROR : INVALID SQL STATEMENT");
-		}
+			if (currentResultSet != null) {
+				currentResultSet.close();
+				currentResultSet = null;
+			}
 
-		currentResultSet.close();
-		currentResultSet = null;
-		return 0;
+			sql = prepareSQLStatement(sql);
+
+			if (sql.matches(usePat)) {
+				callUse(sql);
+			} else if (sql.matches(createDatabasePat)) {
+				callCreateDB(sql);
+			} else if (sql.matches(createTablePat)) {
+				callCreateTable(sql);
+			} else {
+				handleGeneralCommand(sql);
+			}
+			return currentUpdateCount;
+		} catch (SQLException e) {
+			throw new SQLException("ERROR : INVALID SQL STATEMENT");
+		} catch (NullPointerException e) {
+			throw new SQLException(
+					"ERROR : EITHER THE TABLE OR THE DATABASE DON'T EXIST");
+		} catch (Exception e) {
+			throw new SQLException("ERROR : DBMS ERROR");
+		}
+	}
+
+	private void callCreateDB(String sql) throws Exception {
+		System.out.println("CREATE DB CALLED");
+		
+		currentUpdateCount = -1;
+		String DBName = sql.split(" ")[2];
+		dbms.createDB(DBName);
+	}
+
+	private void callUse(String sql) throws Exception {
+		System.out.println("USE CALLED");
+		
+		currentUpdateCount = -1;
+		String DBName = sql.split(" ")[1];
+		dbms.setUsedDB(DBName);
+	}
+
+	private void callCreateTable(String sql) throws Exception {
+		System.out.println("CREATE TALE CALLED");
+		currentUpdateCount = -1;
+		String tbName = sql.split(" ")[2];
+
+		String[] cols_names_types = extractColumnsNames(sql);
+		ColumnIdentifier[] colsID = new ColumnIdentifier[cols_names_types.length];
+
+		for (int i = 0; i < cols_names_types.length; i++) {
+			String[] bySpace = cols_names_types[i].split(" ");
+			colsID[i] = new ColumnIdentifier(bySpace);
+		}
+		dbms.getUsedDB().addTable(tbName, colsID);
 	}
 
 	/**
@@ -332,18 +335,12 @@ public class JDBCStatement implements Statement {
 		}
 	}
 
-	private static String prepareSQLStatement(String sql) throws Exception {
+	private static String prepareSQLStatement(String sql) throws SQLException {
 
-		if (sql == null) {
-			throw new Exception("NULL SQL STRING");
+		if (sql == null || (sql = sql.trim()).equals("")) {
+			// canNotExecuteState();
+			throw new SQLException();
 		}
-
-		sql = sql.trim();
-
-		if (sql.equals("")) {
-			throw new Exception("EMPTY SQL STRING");
-		}
-
 		sql = sql.replaceAll("\\*", " * ");
 		sql = sql.replaceAll("\\(", " ( ");
 		sql = sql.replaceAll("\\)", " ) ");
@@ -351,29 +348,234 @@ public class JDBCStatement implements Statement {
 		sql = sql.replaceAll("\\=", " = ");
 
 		while (sql.contains("  "))
-			sql = sql.replaceAll("\\s{2}", " ");
+			sql = sql.replaceAll("  ", " ");
 
-		return sql;
+		return sql.trim();
 	}
 
-	private ResultSet newCurrentResultSet(RecordSet record) throws SQLException {
-		if (currentResultSet != null) {
-			currentResultSet.close();
+	private void handleSelectComm(String sql) throws SQLException {
+		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
+
+		boolean firstCaseValid = sqlSplitted.length == 2
+				&& sqlSplitted[0].matches(selectSpecificPat);
+		
+		boolean secondCaseValid = sqlSplitted.length == 1
+				&& (sql.matches(selectSpecificPat) || sql.matches(selectAllPat));
+
+		boolean isValidSelect = firstCaseValid || secondCaseValid;
+
+		
+		if (isValidSelect) {
+			try {
+				callSelect(sqlSplitted);
+			} catch (NullPointerException e) {
+				currentResultSet = null;
+				throw new SQLException();
+			}
+		} else {
+			currentResultSet = null;
+			throw new SQLException();
 		}
+	}
+
+	// to be called after regex validation
+	private void callSelect(String[] sqlSplitted) throws NullPointerException {
+		
+		System.out.println("SELECT CALLED");
+		
+		String[] fromSplitted = sqlSplitted[0].split("\\s((?i)from)\\s");
+		String tableName = fromSplitted[1];
+
+		
+		// may through NullPointerException, handled
+		Table tb = dbms.getUsedDB().getTable(tableName);
+
+		if (tb == null) {
+			currentResultSet = null;
+			throw new NullPointerException();
+		}
+		
+		String[] colmsNames = tb.getColNames();
+		Condition c = null;
+		
+		
+
+		if (sqlSplitted.length == 2) {
+			c = new Condition(sqlSplitted[1], tb);
+			colmsNames = extractColumnsNames(sqlSplitted[0]);
+		}
+		currentResultSet = new JDBCResultSet(tb.select(colmsNames, c), this);
+	}
+
+	// to be called after regex validation
+	private String[] extractColumnsNames(String string) {
+		int indexOfOpenPar = string.indexOf('(');
+		int indexOfClosedPar = string.indexOf(')');
+		String toBeSplitted = string.substring(indexOfOpenPar + 1,
+				indexOfClosedPar);
+		return toBeSplitted.trim().split(" , ");
+	}
+
+	private void handleGeneralCommand(String sql) throws SQLException {
+		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
+		boolean[] hasConditionCase = evaluateMatched(sqlSplitted[0]);
+		boolean[] hasNoConditionCase = evaluateMatched(sql);
+		boolean firstCaseValid = evaluateOR(hasConditionCase) && sqlSplitted.length == 2;
+		boolean secondCaseValid = evaluateOR(hasNoConditionCase) && sqlSplitted.length == 1;
+		boolean isValidStmnt = firstCaseValid || secondCaseValid;
+		if (isValidStmnt) {
+			try {
+				if (hasConditionCase[0] == true || hasNoConditionCase[0] == true) {
+					callUpdate(sqlSplitted);
+				} else if (hasConditionCase[1] == true || hasNoConditionCase[1] == true) {
+					callDelete(sqlSplitted);
+				} else if (hasConditionCase[2] == true || hasNoConditionCase[2] == true) {
+					callInsert(sqlSplitted);
+				} else {
+					currentUpdateCount = -1;
+					throw new SQLException();
+				}
+			} catch (Exception e) {
+				currentUpdateCount = -1;
+				throw new SQLException();
+			}
+		} else {
+			currentUpdateCount = -1;
+			throw new SQLException();
+		}
+	}
+
+	private void callInsert(String[] sqlSplitted) throws Exception {
+		
+		System.out.println("INSERT CALLED");
+		
 		currentUpdateCount = -1;
-		currentResultSet = new JDBCResultSet(record, this);
-		return currentResultSet;
+		
+		String tbName = sqlSplitted[0].split(" ")[2];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+		
+		if (tb == null){
+			throw new NullPointerException();
+		}
+		String[] colsNames = extractColumnsNames(sqlSplitted[0]);
+		
+		String[]tempArr =  sqlSplitted[0].split("\\s((?i)values)\\s");
+		String[] values = extractColumnsNames(tempArr[1]);
+	
+		tb.insert(new Record(colsNames, values, tb));
+	}
+
+	private void callDelete(String[] sqlSplitted) throws Exception {
+		System.out.println("DELETE CALLED");
+		
+		String tbName = sqlSplitted[0].split(" ")[2];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+		
+		if (tb == null){
+			currentUpdateCount = -1;
+			throw new NullPointerException();
+		}
+		
+		Condition c = null;
+		if (sqlSplitted.length == 2)
+			c = new Condition(sqlSplitted[1], tb);
+		
+		tb.delete(c);
+	}
+
+	private void callUpdate(String[] sqlSplitted) throws Exception{
+		System.out.println("UPDATE CALLED");
+		
+		String[] setSplitted = sqlSplitted[0].split("\\s((?i)set)\\s");
+		String[] afterSet = setSplitted[1].split(" , ");
+		
+		String[] columnsNames = new String[afterSet.length];
+		String[] values = new String[afterSet.length];
+		
+		for (int i = 0; i < afterSet.length; i++) {
+			String[] splittedVals = afterSet[i].split(" = ");
+			columnsNames[i] = splittedVals[0];
+			values[i] = splittedVals[1];
+		}
+		String tbName = sqlSplitted[0].split(" ")[1];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+		
+		if (tb == null){
+			currentUpdateCount = -1;
+			throw new NullPointerException();
+		}
+		Condition c = null;
+		if (sqlSplitted.length == 2)
+			c = new Condition(sqlSplitted[1], tb);
+		
+		currentUpdateCount = tb.update(columnsNames, values, c);
+	}
+
+	private boolean evaluateOR(boolean[] arr) {
+		int i = 0;
+		boolean val = false;
+		while (i < arr.length)
+			val |= arr[i++];
+		return val;
+	}
+
+	private boolean[] evaluateMatched(String str) {
+		boolean[] toRet = new boolean[3];
+		Arrays.fill(toRet, false);
+
+		if (str.matches(updatePat)) {
+			toRet[0] = true;
+			return toRet;
+		} else if (str.matches(deletePat)) {
+			toRet[1] = true;
+			return toRet;
+		} else if (str.matches(insertIntoPat)) {
+			toRet[2] = true;
+			return toRet;
+		} else {
+			return toRet;
+		}
 	}
 
 	public static void main(String[] args) {
-		String ss = null;
+		
+		String ss1 = "create database newDB" ;
+		String ss2 = "use newDB" ;
+		String ss3 = "create table newTb (c1 Integer , c2 Varchar , c3 boolean)" ;
+		String ss4 = "insert into newTb (c1 , c2 , c3) values (10 , 'omar' , true)" ;
+		String ss5 = "insert into newTb (c1 , c3 ) values (20 , true)" ;
+		String ss6 = "insert into newTb (c3 , c2 ) values (false , 'boody')" ;
+		String ss7 = "insert into newTb (c3 , c3 ) values (false , true)" ;
+		String ss8 = "insert into newTb (c2 , c3 ) values ('mariam' , true)" ;
+		String ss9 = "select* from newTb " ;
+		
+		String ss10 = "select from newTb " ;
+		
+		String ss11 = "select (c1, c2) from newTb where c3 = true" ;
+		String ss12 = "delete from newTb where c3 = true" ;
+		Statement s = null;
+		
 		try {
-			ss = prepareSQLStatement("update friends set age = 10,name=omar, vovo = lklkl , lklhwt = 90");
+			 s = new JDBCStatement(new StdDBMS(), null);
+			 s.execute(ss1);
+			 s.execute(ss2);
+			 s.execute(ss3);
+			 s.execute(ss4);
+			 s.execute(ss5);
+			 s.execute(ss6);
+			 s.execute(ss7);
+			 s.execute(ss8);
+			 s.execute(ss9); 
+			
+			 // s.execute(ss10);
+
+			 s.execute(ss11);
+			 s.execute(ss12);
 		} catch (Exception e) {
+			System.out.println("LOL!");
 			e.printStackTrace();
 		}
-		System.out.println(ss);
-		System.out.println(ss.matches(updatePat));
+		
 	}
 
 	// ------------------------------------------------------\\
