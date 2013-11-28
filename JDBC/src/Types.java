@@ -8,7 +8,7 @@ public class Types {
 	// final private static int TIME = 7;
 
 	public static int getTypeInt(String ColumnType) {
-		if (ColumnType.equalsIgnoreCase("VARCHAR")) {
+		if (ColumnType.equalsIgnoreCase("String")) {
 			return java.sql.Types.VARCHAR;
 		} else if (ColumnType.equalsIgnoreCase("BOOLEAN")) {
 			return java.sql.Types.BOOLEAN;
@@ -23,7 +23,7 @@ public class Types {
 		} else if (ColumnType.equalsIgnoreCase("TIME")) {
 			return java.sql.Types.TIME;
 		} else {
-			return 0;
+			return -10000;
 		}
 	}
 }

@@ -1,7 +1,17 @@
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
+import DBMS.RecordSet;
+
 public class JDBCResultSetMetaData implements ResultSetMetaData {
+	private RecordSet recordSet;
+
+	/**
+	 * constructor
+	 */
+	public JDBCResultSetMetaData(RecordSet recordSet) {
+		this.recordSet = recordSet;
+	}
 
 	/**
 	 * Returns the number of columns in this ResultSet object.
@@ -19,7 +29,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public String getColumnLabel(int column) throws SQLException {
-		return null;
+		return recordSet.getAttributeName(column);
 	}
 
 	/**
@@ -27,7 +37,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public String getColumnName(int column) throws SQLException {
-		return null;
+		return recordSet.getAttributeName(column);
 	}
 
 	/**
@@ -35,7 +45,16 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public int getColumnType(int column) throws SQLException {
-		return 0;
+		String columnName = recordSet.getAttributeName(column);
+		Object classType = recordSet.get(column).getValue(columnName);
+		String classTypeName = classType.getClass().getSimpleName();
+		int columnTypeInt = Types.getTypeInt(classTypeName);
+
+		if (columnTypeInt == -10000) {
+			throw new SQLException("Undefined Data Type");
+		} else {
+			return columnTypeInt;
+		}
 	}
 
 	/**
@@ -43,7 +62,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public String getTableName(int column) throws SQLException {
-		return null;
+		return recordSet.get(column).getTableName();
 	}
 
 	/**
@@ -84,7 +103,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public boolean isWritable(int column) throws SQLException {
-		return false;
+		return true;
 	}
 
 	// ------------------------------------------------------\\
