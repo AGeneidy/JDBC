@@ -3,7 +3,7 @@ package DBMS;
 import java.util.Hashtable;
 
 public interface Database {
-
+	
 	public String getName();
 	
 	public Table getTable(String tableName);

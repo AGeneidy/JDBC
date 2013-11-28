@@ -8,6 +8,10 @@ public class TestConditionClass {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		testAddTable();
+		if (getFoeDB() == null) {
+			System.out.println("Error DB null!");
+			return;
+		}
 		Record newValues = new Record(new String[] {"courseName", "courseCode", "maxGrade", 
 				"maxNumOfSt", "minNumOfSt"}, 
 				new Object[]{"math", new Integer(10), new Integer(10), new Integer(50), new Integer(10)},
@@ -15,8 +19,7 @@ public class TestConditionClass {
 		try {
 			getFoeDB().getTable("courses").insert(newValues);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Error: " + e);
 		}
 		testSelect(getFoeDB().getTable("courses"));
 	}
@@ -33,7 +36,13 @@ public class TestConditionClass {
 	
 	private static Database getFoeDB() {
 
-		DBMS mainDBMS = new StdDBMS();
+		DBMS mainDBMS = null;
+		try {
+			mainDBMS = new StdDBMS();
+		} catch (Exception e1) {
+			System.out.println("Error: can't make mainDBMS, " + e1);
+			return null;
+		}
 		
 		// make sure foe exists:
 		try {

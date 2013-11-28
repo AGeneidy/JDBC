@@ -26,6 +26,7 @@ import DBMS.DBMS;
  * @author OmarYousry
  * 
  */
+@SuppressWarnings("all")
 public class JDBCStatement implements Statement {
 
 	private static String intPat = "(-){0,1}[0-9]+";
