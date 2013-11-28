@@ -9,7 +9,8 @@ public class Condition {
 	Table table;
 
 	public Condition(String cond, Table t) {
-		condition = cond.replace(" ", "").replace("AND", "&").replace("OR", "|").replace("NOT", "!");
+		condition = cond.replace(" ", "").replace("AND", "&").replace("OR", "|").replace("NOT", "!")
+				.replace("and", "&").replace("or", "|").replace("not", "!");
 		table = t;
 	}
 

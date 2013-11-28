@@ -25,9 +25,19 @@ public class JDBCResultSet implements ResultSet {
 
 	private RecordSet records;
 	private int currentIndex = -1;
+	private Statement statement;
+	private int fetchDirection = FETCH_UNKNOWN;
+	
+	public JDBCResultSet(RecordSet rs, Statement st){
+		records = new RecordSet(rs);
+		statement = st;
+		currentIndex = -1;
+	}
 
 	@Override
 	public boolean absolute(int row) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (row > records.size()) {
 			currentIndex = records.size();
 			return false;
@@ -42,27 +52,34 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public void afterLast() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		currentIndex = records.size();
 	}
 
 	@Override
 	public void beforeFirst() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		currentIndex = -1;
 	}
 
 	@Override
 	public void close() throws SQLException {
-
+		records = null;
 	}
 
 	@Override
 	public int findColumn(String columnLabel) throws SQLException {
-
-		return 0;
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
+		return records.getAttributeIndex(columnLabel);
 	}
 
 	@Override
 	public boolean first() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (records.size() > 0) {
 			currentIndex = 0;
 			return true;
@@ -72,12 +89,15 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public Array getArray(int columnIndex) throws SQLException {
-
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		return null;
 	}
 
 	@Override
 	public boolean getBoolean(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -92,6 +112,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public boolean getBoolean(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Boolean)
 			return (Boolean) o;
@@ -101,6 +123,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public Date getDate(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -115,6 +139,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public Date getDate(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Date)
 			return (Date) o;
@@ -124,6 +150,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public double getDouble(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -138,6 +166,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public double getDouble(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Double)
 			return (Double) o;
@@ -147,12 +177,16 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public int getFetchDirection() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 
-		return 0;
+		return fetchDirection;
 	}
 
 	@Override
 	public float getFloat(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -167,6 +201,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public float getFloat(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Float)
 			return (Float) o;
@@ -176,6 +212,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public int getInt(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -190,6 +228,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public int getInt(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Integer)
 			return (Integer) o;
@@ -199,6 +239,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public long getLong(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -213,6 +255,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public long getLong(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof Long)
 			return (Long) o;
@@ -222,12 +266,16 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public ResultSetMetaData getMetaData() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 
 		return null;
 	}
 
 	@Override
 	public Object getObject(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -238,12 +286,15 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public Statement getStatement() throws SQLException {
-
-		return null;
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
+		return statement;
 	}
 
 	@Override
 	public String getString(int columnIndex) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (columnIndex < 0
 				|| columnIndex >= records.getAttributesNames().length)
 			throw new SQLException("ColumnIndex is invalid");
@@ -258,6 +309,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public String getString(String columnLabel) throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		Object o = records.get(currentIndex).getValue(columnLabel);
 		if (o instanceof String)
 			return (String) o;
@@ -267,32 +320,41 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public boolean isAfterLast() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		return currentIndex == records.size();
 	}
 
 	@Override
 	public boolean isBeforeFirst() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		return currentIndex == -1;
 	}
 
 	@Override
 	public boolean isClosed() throws SQLException {
-
-		return false;
+		return (records == null);
 	}
 
 	@Override
 	public boolean isFirst() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		return currentIndex == 0;
 	}
 
 	@Override
 	public boolean isLast() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		return currentIndex == records.size() - 1;
 	}
 
 	@Override
 	public boolean last() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (records.size() > 0) {
 			currentIndex = records.size() - 1;
 			return true;
@@ -302,6 +364,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public boolean next() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (++currentIndex < records.size())
 			return true;
 		currentIndex = records.size();
@@ -310,6 +374,8 @@ public class JDBCResultSet implements ResultSet {
 
 	@Override
 	public boolean previous() throws SQLException {
+		if(records == null)
+			throw new SQLException("ResultSet already Closed");
 		if (--currentIndex >= 0)
 			return true;
 		currentIndex = -1;

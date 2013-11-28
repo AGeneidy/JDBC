@@ -27,17 +27,17 @@ public class RecordSet extends Vector<Record>{		//changed from hashset to vector
 		this.attributesNames = attributesNames;
 	}
 	
-	public String getAttributeName(int columnInd) {
-		if(columnInd>-1 && columnInd<attributesNames.length)
-			return attributesNames[columnInd];
+	public String getAttributeName(int columnInd) {		// numbering starts 1->n
+		if(columnInd>0 && columnInd<=attributesNames.length)
+			return attributesNames[columnInd-1];
 		return null;
 	}
 	
-	public int getAttributeIndex(String columnName) {
+	public int getAttributeIndex(String columnName) {	// numbering starts 1->n
 		for(int i=0; i<attributesNames.length; i++){
 			if(attributesNames[i].equalsIgnoreCase(columnName))
-				return i;
+				return i+1;
 		}
-		return -1;
+		return 0;
 	}
 }
