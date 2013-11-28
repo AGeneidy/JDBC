@@ -138,7 +138,6 @@ public class JDBCDriver implements Driver {
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
 			throws SQLException {
 		
-		
 		return null;
 	}
 
