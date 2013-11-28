@@ -5,6 +5,8 @@ public interface Table {
 	public String getTableName();
 
 	public ColumnIdentifier[] getColIDs();
+	
+	public String[] getColNames();
 
 	public RecordSet select(String[] columnsNames, Condition condition);
 

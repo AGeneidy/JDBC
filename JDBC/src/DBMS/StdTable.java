@@ -29,6 +29,15 @@ public class StdTable implements Table {
 	public ColumnIdentifier[] getColIDs() {
 		return columnsId;
 	}
+	
+	public String[] getColNames() {
+		// return array of names of all columns of the table
+		// of the database of the project.
+		String[] ret = new String[columnsId.length];
+		for (int i = 0; i < columnsId.length; i++)
+			ret[i] = columnsId[i].getColumnName();
+		return ret;
+	}
 
 	public void insert(Record newValues) throws Exception {
 
