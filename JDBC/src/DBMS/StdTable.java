@@ -73,7 +73,7 @@ public class StdTable implements Table {
 		Record readRecord;
 		try {
 			while ((readRecord = hndl.readNextRecord()) != null) {
-				if (condition.meetsCondition(readRecord)) {
+				if (condition == null || condition.meetsCondition(readRecord)) {
 					Record r = new Record(this);
 					for (String col : columnsNames)
 						r.setCell(col, readRecord.getValue(col));
@@ -105,7 +105,7 @@ public class StdTable implements Table {
 		// !meet condition
 		Record readRecord;
 		while ((readRecord = tempFileXMLHandler.readNextRecord()) != null) {
-			if (!condition.meetsCondition(readRecord)) {
+			if (condition != null && !condition.meetsCondition(readRecord)) {
 				tableFileXMLHandler.writeNextRecord(readRecord);
 			}
 		}
