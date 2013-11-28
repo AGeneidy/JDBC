@@ -39,6 +39,24 @@ public class StdDBMS implements DBMS {
 		usedDatabase = null;
 		
 	}
+	
+	public boolean isValidUserName(String username) {
+		String s_username = config.get("username");
+		if (s_username == null)
+			s_username = "";
+		if (username == null)
+			username = "";
+		return s_username.equals(username);
+	}
+	
+	public boolean isValidPassword(String password) {
+		String s_password = config.get("password");
+		if (s_password == null)
+			s_password = "";
+		if (password == null)
+			password = "";
+		return s_password.equals(password);
+	}
 
 	@Override
 	public void createDB(String DBName) throws Exception {

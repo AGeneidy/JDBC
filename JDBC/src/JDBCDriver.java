@@ -10,9 +10,6 @@ import DBMS.*;
 
 public class JDBCDriver implements Driver {
 	
-	private String username = "cutepuppy";
-	private String password = "69696969";
-	
 	/**
 	 * Static Initializer :v
 	 * When the class is loaded, it registers itself
@@ -94,15 +91,11 @@ public class JDBCDriver implements Driver {
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
 		String dbName = urlToDataBase(url);
-		String iUsername = info.getProperty("user");
-		String iPassword = info.getProperty("password");
+		String username = info.getProperty("user");
+		String password = info.getProperty("password");
 		// valid URL?
 		if (dbName == null)
 			return null;
-		// check user name and password:
-		if (iUsername == null || iPassword == null ||
-		    iUsername != username || iPassword != password)
-			throw new java.sql.SQLClientInfoException();
 		// instantiate DBMS:
 		DBMS dbms;
 		try {
@@ -110,6 +103,9 @@ public class JDBCDriver implements Driver {
 		} catch (Exception e1) {
 			throw new SQLException(e1.getMessage());
 		}
+		// check user name and password:
+		if (!dbms.isValidUserName(username) || !dbms.isValidPassword(password))
+			throw new SQLException("Username or password is not valid");
 		// connect to database:
 		if (!dbName.equals("")) {
 			try {
