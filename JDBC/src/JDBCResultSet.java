@@ -67,6 +67,7 @@ public class JDBCResultSet implements ResultSet {
 	@Override
 	public void close() throws SQLException {
 		records = null;
+		statement = null;
 	}
 
 	@Override

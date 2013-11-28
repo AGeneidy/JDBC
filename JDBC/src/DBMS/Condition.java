@@ -42,9 +42,7 @@ public class Condition {
 				i = j;
 			}
 		}
-
-		return valueOfExplicitExp(substitute);
-		
+		return valueOfExplicitExp(substitute);		
 	}
 	
 	
