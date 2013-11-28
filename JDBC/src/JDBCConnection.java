@@ -30,16 +30,44 @@ public class JDBCConnection implements Connection {
 	}
 	
 	/**
-	 * 
+	 * Creates a Statement object for sending SQL statements
+	 * to the database. SQL statements without parameters
+	 * are normally executed using Statement objects. If the
+	 * same SQL statement is executed many times, it may be
+	 * more efficient to use a PreparedStatement object.
+	 * Result sets created using the returned Statement object
+	 * will by default be type TYPE_FORWARD_ONLY and have a
+	 * concurrency level of CONCUR_READ_ONLY. The holdability
+	 * of the created result sets can be determined by calling
+	 * getHoldability().
+	 * Returns:
+	 * a new default Statement object
+	 * Throws:
+	 * SQLException - if a database access error occurs or this
+	 * method is called on a closed connection
 	 */
 	@Override
 	public Statement createStatement() throws SQLException {
 		return null;
 	}
 
+	/**
+	 * Releases this Connection object's database and JDBC
+	 * resources immediately instead of waiting for them to
+	 * be automatically released.
+	 * Calling the method close on a Connection object that
+	 * is already closed is a no-op.
+	 * It is strongly recommended that an application explicitly
+	 * commits or rolls back an active transaction prior to
+	 * calling the close method. If the close method is called
+	 * and there is an active transaction, the results are
+	 * implementation-defined.
+	 * Throws:
+	 * SQLException - SQLException if a database access error occurs
+	 */
 	@Override
 	public void close() throws SQLException {
-
+		dbms = null; // release the DBMS object.
 	}
 
 	// ------------------------------------------------------\\
