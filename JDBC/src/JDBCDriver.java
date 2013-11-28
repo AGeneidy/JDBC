@@ -114,7 +114,14 @@ public class JDBCDriver implements Driver {
 			}
 		}
 		// create new connection
-		return new JDBCConnection(dbms);
+		JDBCConnection c;
+		try {
+			c = new JDBCConnection(dbms);
+		} catch (Exception e) {
+			throw new SQLException("Unable to create new connection!");
+		}
+		// return the connection
+		return c;
 	}
 
 	/**

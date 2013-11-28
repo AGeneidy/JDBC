@@ -25,7 +25,9 @@ public class JDBCConnection implements Connection {
 	/**
 	 * The LOL constructor.
 	 */
-	public JDBCConnection(DBMS dbms) {
+	public JDBCConnection(DBMS dbms) throws Exception {
+		if (dbms == null)
+			throw new Exception("Null database manager!");
 		this.dbms = dbms;
 	}
 	
@@ -48,7 +50,9 @@ public class JDBCConnection implements Connection {
 	 */
 	@Override
 	public Statement createStatement() throws SQLException {
-		return null;
+		if (dbms == null)
+			throw new SQLException("This connection is closed!");
+		return new JDBCStatement(dbms, this);
 	}
 
 	/**

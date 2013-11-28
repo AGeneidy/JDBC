@@ -1,9 +1,8 @@
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Main {
-	@SuppressWarnings("unchecked")
+	
 	public static void main(String[] args) {
 
 		// This is to be CMD main interface required in the problem statement
@@ -18,7 +17,8 @@ public class Main {
 		// 4- Try to obtain a statement instance
 		// 5- Try to direct all SQL statements to the statement instance
 		
-		// 1,2: load the jdbc driver (it registers itself automatically :D)
+		// 1,2: load the JDBC driver (it registers itself automatically :D)
+		// ------------------------------------------------------------------
 		try {
 			Class.forName("JDBCDriver"); // our DBMS Driver :D
 		} catch(ClassNotFoundException e) {
@@ -26,11 +26,11 @@ public class Main {
 		}
 		
 		// 3: obtain connection:
+		// ----------------------
 		try {
 			DriverManager.getConnection("jdbc:dana:localhost:foe", "cutepuppy", "69696969");
 		} catch (SQLException e) {
 			System.err.println("Error creating connection: " + e);
-			//e.printStackTrace();
 		}
 		
 	}

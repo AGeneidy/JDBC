@@ -6,6 +6,8 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import DBMS.DBMS;
+
 /**
  * The object used for executing a static SQL statement and returning the
  * results it produces.
@@ -52,10 +54,7 @@ public class JDBCStatement implements Statement {
 	 * Constructor
 	 * 
 	 */
-	public JDBCStatement(JDBCConnection c) throws SQLException {
-		if ((c == null) || c.isClosed()) {
-			throw new SQLException("Connection is not open");
-		}
+	public JDBCStatement(DBMS dbms, JDBCConnection c) throws SQLException {
 		connection = c;
 		sqlBatch = new LinkedList<String>();
 	}

@@ -12,7 +12,7 @@ public interface Table {
 
 	public void insert(Record newValues) throws Exception;
 
-	public void delete(Condition condition) throws Exception;
+	public int delete(Condition condition) throws Exception;
 
 	public int update(String[] columnsNames, Object[] values,
 			Condition condition) throws Exception;
