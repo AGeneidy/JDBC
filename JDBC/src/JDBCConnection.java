@@ -22,10 +22,16 @@ public class JDBCConnection implements Connection {
 
 	private DBMS dbms;
 	
+	/**
+	 * The LOL constructor.
+	 */
 	public JDBCConnection(DBMS dbms) {
 		this.dbms = dbms;
 	}
 	
+	/**
+	 * 
+	 */
 	@Override
 	public Statement createStatement() throws SQLException {
 		return null;

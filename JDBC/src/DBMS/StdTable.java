@@ -133,7 +133,7 @@ public class StdTable implements Table {
 		// records if it meet the condition
 		Record readRecord;
 		while ((readRecord = tempFileXMLHandler.readNextRecord()) != null) {
-			if (condition.meetsCondition(readRecord)) {
+			if (condition == null || condition.meetsCondition(readRecord)) {
 				for (int i = 0; i < columnsNames.length; i++) {
 					readRecord.setCell(columnsNames[i], values[i]);
 				}
