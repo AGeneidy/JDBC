@@ -14,10 +14,10 @@ public interface Table {
 
 	public void delete(Condition condition) throws Exception;
 
-	public void update(String[] columnsNames, Object[] values,
+	public int update(String[] columnsNames, Object[] values,
 			Condition condition) throws Exception;
 	
-	public void update(String[] columnsNames, String[] values,
+	public int update(String[] columnsNames, String[] values,
 			Condition condition) throws Exception;
 
 }

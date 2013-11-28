@@ -126,9 +126,12 @@ public class StdTable implements Table {
 		tmpFile.delete();
 	}
 
-	public void update(String[] columnsNames, Object[] values,
+	public int update(String[] columnsNames, Object[] values,
 			Condition condition) throws Exception {
 
+		int matched = 0;
+		Record readRecord;
+		
 		// rename table file to a "tableName.tmp":
 		Files.copy(tableFile.toPath(), tmpFile.toPath());
 
@@ -140,9 +143,9 @@ public class StdTable implements Table {
 				this, true);
 		// read all elements of tmpFile and write them into tableFile and update
 		// records if it meet the condition
-		Record readRecord;
 		while ((readRecord = tempFileXMLHandler.readNextRecord()) != null) {
 			if (condition == null || condition.meetsCondition(readRecord)) {
+				matched++;
 				for (int i = 0; i < columnsNames.length; i++) {
 					readRecord.setCell(columnsNames[i], values[i]);
 				}
@@ -155,17 +158,18 @@ public class StdTable implements Table {
 		tableFileXMLHandler.close();
 		// delete tmpFile
 		tmpFile.delete();
-
+		// return number of matched rows:
+		return matched;
 	}
 
-	public void update(String[] columnsNames, String[] values,
+	public int update(String[] columnsNames, String[] values,
 			Condition condition) throws Exception {
 		
 		Record r = new Record(columnsNames, values, this);
 		Object[] obj = new Object[columnsNames.length];
 		for (int i = 0; i < columnsNames.length; i++)
 			obj[i] = r.getValue(columnsNames[i]);
-		update(columnsNames, obj, condition);
+		return update(columnsNames, obj, condition);
 
 	}
 
