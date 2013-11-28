@@ -27,8 +27,10 @@ public class JDBCResultSet implements ResultSet {
 	private int currentIndex = -1;
 	private Statement statement;
 	private int fetchDirection = FETCH_UNKNOWN;
+	private ResultSetMetaData RSMetaData; 
 	
 	public JDBCResultSet(RecordSet rs, Statement st){
+		//RSMetaData = new JDBCResultSetMetaData();
 		records = new RecordSet(rs);
 		statement = st;
 		currentIndex = -1;
@@ -269,8 +271,7 @@ public class JDBCResultSet implements ResultSet {
 	public ResultSetMetaData getMetaData() throws SQLException {
 		if(records == null)
 			throw new SQLException("ResultSet already Closed");
-
-		return null;
+		return RSMetaData;
 	}
 
 	@Override
