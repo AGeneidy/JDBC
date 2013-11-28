@@ -18,7 +18,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public int getColumnCount() throws SQLException {
-		return 0;
+		return recordSet.get(0).getRecordSize();
 	}
 
 	/**

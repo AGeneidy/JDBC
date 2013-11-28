@@ -79,6 +79,10 @@ public class Record {
 	public String getTableName() {
 		return table.getTableName();
 	}
+	
+	public int getRecordSize(){
+		return cells.size();
+	}
 
 	public Object getValue(String columnName) {
 		Object ret = cells.get(columnName);
