@@ -3,8 +3,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+
 import java.util.LinkedList;
 import java.util.Queue;
+
+import DBMS.*;
+
+import DBMS.DBMS;
 
 import DBMS.DBMS;
 
@@ -22,6 +27,32 @@ import DBMS.DBMS;
  * 
  */
 public class JDBCStatement implements Statement {
+
+	private static String intPat = "(-){0,1}[0-9]+";
+	private static String RealPat = "(-){0,1}[0-9]+(\\.){0,1}[0-9]+";
+	private static String stringPat = ".*";
+	private static String datePat = "[1-2]([0-9]){3}-((0[1-9])|1[0-2])-([0-2][1-9]|3[0-1])T([0-2][0-3])\\:([0-5][0-9])\\:([0-5][0-9])";
+	private static String booleanPat = "(((?i)true)|((?i)false))";
+
+	private static String operatorPat = "(\\*|\\<\\=|\\>\\=|\\=|\\<|\\>)";
+
+	private static String nameReq = "([A-Za-z][A-Za-z0-9]*)";
+
+	private static String selectSpecificPat = "((?i)select)\\s\\(\\s" + "("
+			+ nameReq + "\\s\\,\\s" + ")*" + nameReq
+			+ "{1}\\s\\)\\s((?i)from)\\s" + nameReq;
+
+	private static String selectAllPat = "((?i)select)\\s"
+			+ "\\*\\s((?i)from)\\s" + nameReq;
+
+	private static String deletePat = "((?i)delete)\\s((?i)from)\\s" + nameReq;
+
+	private static String colValPat = "(" + nameReq + "\\s\\=\\s" + stringPat
+			+ ")";
+
+	private static String updatePat = "((?i)update)\\s" + nameReq
+			+ "\\s((?i)set)\\s" + "(" + colValPat + "\\s\\,\\s" + ")*"
+			+ colValPat + "{1}";
 
 	/**
 	 * this specifies the time limit after which the query is stopped, measured
@@ -43,7 +74,7 @@ public class JDBCStatement implements Statement {
 	/**
 	 * Holds the result of the last executed SQL query.
 	 */
-	private JDBCResultSet currentResultSet = null;
+	private ResultSet currentResultSet = null;
 
 	/**
 	 * Holds the
@@ -51,28 +82,99 @@ public class JDBCStatement implements Statement {
 	private int currentUpdateCount = -1;
 
 	/**
+	 * A DBMS delegate to execute the actual SQL commands
+	 */
+	private DBMS dbms;
+
+	/**
 	 * Constructor
 	 * 
 	 */
+
 	public JDBCStatement(DBMS dbms, JDBCConnection c) throws SQLException {
+		if (dbms == null || c == null)
+			throw new SQLException("Error : Wrong Statement initialization");
+
 		connection = c;
+		this.dbms = dbms;
 		sqlBatch = new LinkedList<String>();
 	}
 
 	/**
 	 * Executes the given SQL statement: This method will return true if the SQL
-	 * query was a SELECT, or false if it was an UPDATE, INSERT, or DELETE
-	 * statement.
+	 * query was a SELECT, or false if it was anUPDATE, INSERT, DELETE, USE or
+	 * CRETAE statement.
 	 * 
 	 * If the statement was a SELECT query, you can retrieve the results by
 	 * calling the getResultSet() method.
 	 * 
-	 * If the statement was an UPDATE, INSERT, or DELETE statement, you can
-	 * retrieve the affected rows count by calling getUpdateCount()
+	 * If the statement was an UPDATE, INSERT, DELETE, USE or CRETAE statement,
+	 * you can retrieve the affected rows count by calling getUpdateCount()
 	 */
 	@Override
 	public boolean execute(String sql) throws SQLException {
-		return false;
+		try {
+			executeUpdate(sql);
+			return false;
+		} catch (SQLException executeUpdateExc) {
+			try {
+				executeQuery(sql);
+				return true;
+			} catch (SQLException executeQueryExc) {
+				canNotExecuteState();
+				throw new SQLException("ERROR : UNDEFINED STATEMENT");
+			}
+		}
+	}
+
+	private void handleConditionedCommand(String sql) {
+		sql += " ";
+		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
+
+		if (sqlSplitted.length == 2) {
+			// THERE IS A COMMAND, AND A CONDITION
+
+			String command = sqlSplitted[0].trim();
+			String condition = sqlSplitted[1].trim();
+
+			if (command.matches(selectSpecificPat)) {
+				handleSelectCommand(sqlSplitted);
+			} else if (command.matches(updatePat)) {
+				handleUpdateCommand(sqlSplitted);
+			} else if (command.matches(deletePat)) {
+				handelDeleteCommand(sqlSplitted);
+			} else {
+
+			}
+		} else if (sqlSplitted.length == 1) {
+			// NO CONDITION WAS FOUND
+
+			String[] sqlSplitted2 = sql.split(" ");
+			String isWhere = sqlSplitted2[sqlSplitted2.length - 1];
+
+			if (isWhere.equalsIgnoreCase("where")) {
+				// ERROR : NO CONDITION AFTER WHERE
+			} else {
+				// UNCONDITIONED STATEMENT
+			}
+		} else {
+			// ERROR
+		}
+	}
+
+	private void handleSelectCommand(String[] sqlSplitted) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void handleUpdateCommand(String[] sqlSplitted) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void handelDeleteCommand(String[] sqlSplitted) {
+		// TODO Auto-generated method stub
+
 	}
 
 	/**
@@ -81,7 +183,25 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public ResultSet executeQuery(String sql) throws SQLException {
-		return null;
+		try {
+
+			sql = prepareSQLStatement(sql);
+
+			if (sql.matches(selectAllPat)) {
+				String[] sqlSplitted = sql.split("\\s((?i)from)\\s");
+
+				String tableName = sqlSplitted[1];
+
+				dbms.getUsedDB().getTable(tableName);
+
+				return null;
+			} else {
+				handleConditionedCommand(sql);
+			}
+			return null;
+		} catch (Exception e) {
+			throw new SQLException("ERROR : INVALID SQL STATEMENT");
+		}
 	}
 
 	/**
@@ -93,6 +213,15 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public int executeUpdate(String sql) throws SQLException {
+
+		try {
+			sql = prepareSQLStatement(sql);
+		} catch (Exception e) {
+			throw new SQLException("ERROR : INVALID SQL STATEMENT");
+		}
+
+		currentResultSet.close();
+		currentResultSet = null;
 		return 0;
 	}
 
@@ -192,6 +321,58 @@ public class JDBCStatement implements Statement {
 	@Override
 	public int getUpdateCount() throws SQLException {
 		return currentUpdateCount;
+	}
+
+	private void canNotExecuteState() throws SQLException {
+		currentUpdateCount = -1;
+		if (currentResultSet != null) {
+			currentResultSet.close();
+			currentResultSet = null;
+		}
+	}
+
+	private static String prepareSQLStatement(String sql) throws Exception {
+
+		if (sql == null) {
+			throw new Exception("NULL SQL STRING");
+		}
+
+		sql = sql.trim();
+
+		if (sql.equals("")) {
+			throw new Exception("EMPTY SQL STRING");
+		}
+
+		sql = sql.replaceAll("\\*", " * ");
+		sql = sql.replaceAll("\\(", " ( ");
+		sql = sql.replaceAll("\\)", " ) ");
+		sql = sql.replaceAll("\\,", " , ");
+		sql = sql.replaceAll("\\=", " = ");
+
+		while (sql.contains("  "))
+			sql = sql.replaceAll("\\s{2}", " ");
+
+		return sql;
+	}
+
+	private ResultSet newCurrentResultSet(RecordSet record) throws SQLException {
+		if (currentResultSet != null) {
+			currentResultSet.close();
+		}
+		currentUpdateCount = -1;
+		currentResultSet = new JDBCResultSet(record, this);
+		return currentResultSet;
+	}
+
+	public static void main(String[] args) {
+		String ss = null;
+		try {
+			ss = prepareSQLStatement("update friends set age = 10,name=omar, vovo = lklkl , lklhwt = 90");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println(ss);
+		System.out.println(ss.matches(updatePat));
 	}
 
 	// ------------------------------------------------------\\
