@@ -27,7 +27,7 @@ public class Main {
 		
 		// 3: obtain connection:
 		try {
-			DriverManager.getConnection("jdbc:dbms:costa:localhost::foe", "cutepuppy", "69696969");
+			DriverManager.getConnection("jdbc:dana:localhost:foe", "cutepuppy", "69696969");
 		} catch (SQLException e) {
 			System.err.println("Error creating connection: " + e);
 			//e.printStackTrace();

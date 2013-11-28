@@ -28,27 +28,21 @@ public class JDBCDriver implements Driver {
 		String[] tokens = url.split(":");
 		
 		// url format:
-		// jdbc:dbms:costa:localhost::<dbname>
+		// jdbc:dana:localhost:<dbname>
 		
-		if (tokens.length != 6)
+		if (!(tokens.length == 3 || tokens.length == 4))
 			return null;
 		
 		if (!tokens[0].equals("jdbc"))
 			return null;
 		
-		if (!tokens[1].equals("dbms"))
+		if (!tokens[1].equals("dana"))
 			return null;
 		
-		if (!tokens[2].equals("costa")) // sub-protocol (implemented
+		if (!tokens[2].equals("localhost"))
 			return null;
 		
-		if (!tokens[3].equals("localhost"))
-			return null;
-		
-		if (!tokens[4].equals(""))
-			return null;
-		
-		return tokens[5]; // database name
+		return tokens.length == 4 ? tokens[3] : ""; // database name
 	}
 	
 	@Override
@@ -68,15 +62,18 @@ public class JDBCDriver implements Driver {
 		if (iUsername == null || iPassword == null ||
 		    iUsername != username || iPassword != password)
 			throw new java.sql.SQLClientInfoException();
-		// connect to the database:
+		// instantiate DBMS:
 		DBMS dbms = new StdDBMS();
-		try {
-			dbms.setUsedDB(dbName);
-		} catch (Exception e) {
-			throw new SQLException("Database not found!");
+		// connect to database:
+		if (!dbName.equals("")) {
+			try {
+				dbms.setUsedDB(dbName);
+			} catch (Exception e) {
+				throw new SQLException("Database not found!");
+			}
 		}
 		// create new connection
-		return new JDBCConnection();
+		return new JDBCConnection(dbms);
 	}
 
 	@Override

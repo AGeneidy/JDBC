@@ -16,9 +16,16 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import DBMS.*;
 
 public class JDBCConnection implements Connection {
 
+	private DBMS dbms;
+	
+	public JDBCConnection(DBMS dbms) {
+		this.dbms = dbms;
+	}
+	
 	@Override
 	public Statement createStatement() throws SQLException {
 		return null;
