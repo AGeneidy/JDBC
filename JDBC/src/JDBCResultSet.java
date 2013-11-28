@@ -28,9 +28,9 @@ public class JDBCResultSet implements ResultSet {
 	private Statement statement;
 	private int fetchDirection = FETCH_UNKNOWN;
 	private ResultSetMetaData RSMetaData; 
-	
+
 	public JDBCResultSet(RecordSet rs, Statement st){
-		//RSMetaData = new JDBCResultSetMetaData();
+		RSMetaData = new JDBCResultSetMetaData(new RecordSet(rs));
 		records = new RecordSet(rs);
 		statement = st;
 		currentIndex = -1;
