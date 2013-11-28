@@ -16,7 +16,7 @@ public class StdDatabase implements Database {
 
 	// tables:
 	Hashtable<String, Table> tables;
-
+	
 	private void readSchema() {
 		try {
 			Scanner scan = new Scanner(schemaFile);

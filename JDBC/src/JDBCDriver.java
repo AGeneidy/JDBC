@@ -104,7 +104,12 @@ public class JDBCDriver implements Driver {
 		    iUsername != username || iPassword != password)
 			throw new java.sql.SQLClientInfoException();
 		// instantiate DBMS:
-		DBMS dbms = new StdDBMS();
+		DBMS dbms;
+		try {
+			dbms = new StdDBMS();
+		} catch (Exception e1) {
+			throw new SQLException(e1.getMessage());
+		}
 		// connect to database:
 		if (!dbName.equals("")) {
 			try {
