@@ -3,8 +3,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -25,10 +23,16 @@ import DBMS.*;
  */
 public class JDBCStatement implements Statement {
 
-	
-	// Remember the problem of reserved words (set , from , where )
-	
+	private String keywordExc = "ERROR : YOU CAN NOT USE A KEYWORD AS AN ATTRIBUTE NAME";
+	private static String resourceNotFound = "ERROR : THIS RESOURCE IS NOT FOUND";
+	private static String undifinedSQL = "ERROR : THIS IS NOT A SQL STATEMENT";
+
 	private static String stringPat = "(.*)";
+
+	private static String[] keywords = { "(?i)from", "(?i)where", "(?i)set",
+			"(?i)values", "(?i)delete", "(?i)select", "(?i)create",
+			"(?i)database", "(?i)table", "(?i)use", "(?i)update",
+			"((?i)insert)", "((?i)into)" };
 
 	private static String nameReq = "([A-Za-z][A-Za-z0-9]*)";
 
@@ -101,12 +105,12 @@ public class JDBCStatement implements Statement {
 	 */
 
 	public JDBCStatement(DBMS dbms, JDBCConnection c) throws SQLException {
-//		if (dbms == null || c == null)
-//			throw new SQLException("Error : Wrong Statement initialization");
+		if (dbms == null || c == null)
+			throw new SQLException("Error : Wrong Statement initialization");
 
-		connection = c;
+		this.connection = c;
 		this.dbms = dbms;
-		sqlBatch = new LinkedList<String>();
+		this.sqlBatch = new LinkedList<String>();
 	}
 
 	/**
@@ -122,17 +126,15 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public boolean execute(String sql) throws SQLException {
-		try {
+		sql = prepareSQLStatement(sql);
+		String isSelect = sql.split(" ")[0];
+		
+		if (isSelect.equalsIgnoreCase("select")) {
+			executeQuery(sql);
+			return true;
+		} else {
 			executeUpdate(sql);
 			return false;
-		} catch (SQLException executeUpdateExc) {
-			try {
-				executeQuery(sql);
-				return true;
-			} catch (SQLException executeQueryExc) {
-				canNotExecuteState();
-				throw new SQLException("ERROR : UNDEFINED STATEMENT");
-			}
 		}
 	}
 
@@ -145,19 +147,10 @@ public class JDBCStatement implements Statement {
 		try {
 			currentUpdateCount = -1;
 			sql = prepareSQLStatement(sql);
-			
-			try{
-				handleSelectComm(sql);
-			}catch (Exception e){
-				e.printStackTrace();
-			}
-			
+			handleSelectComm(sql);
 			return currentResultSet;
-		} catch (SQLException e) {
-			throw new SQLException("ERROR : INVALID SQL STATEMENT");
-		} catch (NullPointerException e) {
-			throw new SQLException(
-					"ERROR : EITHER THE TABLE OR THE DATABASE DON'T EXIST");
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
 		}
 	}
 
@@ -175,9 +168,7 @@ public class JDBCStatement implements Statement {
 				currentResultSet.close();
 				currentResultSet = null;
 			}
-
 			sql = prepareSQLStatement(sql);
-
 			if (sql.matches(usePat)) {
 				callUse(sql);
 			} else if (sql.matches(createDatabasePat)) {
@@ -188,45 +179,9 @@ public class JDBCStatement implements Statement {
 				handleGeneralCommand(sql);
 			}
 			return currentUpdateCount;
-		} catch (SQLException e) {
-			throw new SQLException("ERROR : INVALID SQL STATEMENT");
-		} catch (NullPointerException e) {
-			throw new SQLException(
-					"ERROR : EITHER THE TABLE OR THE DATABASE DON'T EXIST");
 		} catch (Exception e) {
-			throw new SQLException("ERROR : DBMS ERROR");
+			throw new SQLException(e.getMessage());
 		}
-	}
-
-	private void callCreateDB(String sql) throws Exception {
-		System.out.println("CREATE DB CALLED");
-		
-		currentUpdateCount = -1;
-		String DBName = sql.split(" ")[2];
-		dbms.createDB(DBName);
-	}
-
-	private void callUse(String sql) throws Exception {
-		System.out.println("USE CALLED");
-		
-		currentUpdateCount = -1;
-		String DBName = sql.split(" ")[1];
-		dbms.setUsedDB(DBName);
-	}
-
-	private void callCreateTable(String sql) throws Exception {
-		System.out.println("CREATE TALE CALLED");
-		currentUpdateCount = -1;
-		String tbName = sql.split(" ")[2];
-
-		String[] cols_names_types = extractColumnsNames(sql);
-		ColumnIdentifier[] colsID = new ColumnIdentifier[cols_names_types.length];
-
-		for (int i = 0; i < cols_names_types.length; i++) {
-			String[] bySpace = cols_names_types[i].split(" ");
-			colsID[i] = new ColumnIdentifier(bySpace);
-		}
-		dbms.getUsedDB().addTable(tbName, colsID);
 	}
 
 	/**
@@ -239,7 +194,7 @@ public class JDBCStatement implements Statement {
 			sqlBatch = new LinkedList<String>();
 		}
 		if (sql != null) {
-			sqlBatch.add(sql);
+			sqlBatch.offer(sql);
 		}
 	}
 
@@ -259,7 +214,17 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public int[] executeBatch() throws SQLException {
-		return null;
+		if (sqlBatch == null) {
+			return null;
+		}
+		int[] updateCounts = new int[sqlBatch.size()];
+		int i = 0;
+		while (!sqlBatch.isEmpty()) {
+			String command = sqlBatch.poll();
+			execute(command);
+			updateCounts[i++] = currentUpdateCount;
+		}
+		return updateCounts;
 	}
 
 	/**
@@ -271,7 +236,20 @@ public class JDBCStatement implements Statement {
 	 */
 	@Override
 	public void close() throws SQLException {
-
+		if (connection != null) {
+			connection.close();
+			connection = null;
+		}
+		if (sqlBatch != null) {
+			clearBatch();
+			sqlBatch = null;
+		}
+		if (currentResultSet != null) {
+			currentResultSet.close();
+			currentResultSet = null;
+		}
+		currentUpdateCount = -1;
+		dbms = null;
 	}
 
 	/**
@@ -327,6 +305,157 @@ public class JDBCStatement implements Statement {
 		return currentUpdateCount;
 	}
 
+	// --------------------------------------------------------------------\\
+	// ////////////--------- PRIVATE HELPING METHODS ----------\\\\\\\\\\\\ \\
+	// ----------------------------------------------------------------------\\
+
+	private void handleGeneralCommand(String sql) throws Exception {
+		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
+		if (sqlSplitted.length > 2)
+			throw new SQLException(keywordExc);
+		String splitMatch = evaluateMatched(sqlSplitted[0]);
+		String origMatch = evaluateMatched(sql);
+		boolean isValidStmnt = splitMatch != null && sqlSplitted.length == 2
+				|| origMatch != null && sqlSplitted.length == 1;
+		if (!isValidStmnt) {
+			currentUpdateCount = -1;
+			throw new SQLException(undifinedSQL);
+		}
+		String notNull = splitMatch != null ? splitMatch : origMatch;
+		if (notNull.equals(updatePat)) {
+			callUpdate(sqlSplitted);
+		} else if (notNull.equals(deletePat)) {
+			callDelete(sqlSplitted);
+		} else if (notNull.equals(insertIntoPat)) {
+			callInsert(sqlSplitted);
+		}
+	}
+
+	private void callCreateDB(String sql) throws Exception {
+		currentUpdateCount = -1;
+		String dbName = sql.split(" ")[2];
+		if (isKeyword(dbName))
+			throw new Exception(keywordExc);
+		dbms.createDB(dbName);
+	}
+
+	private void callCreateTable(String sql) throws Exception {
+		currentUpdateCount = -1;
+		String tbName = sql.split(" ")[2];
+		String[] cols_names_types = extractColumnsNames(sql);
+		ColumnIdentifier[] colsID = new ColumnIdentifier[cols_names_types.length];
+		for (int i = 0; i < cols_names_types.length; i++) {
+			String[] bySpace = cols_names_types[i].split(" ");
+			for (int j = 0; j < bySpace.length; j++) {
+				if (isKeyword(bySpace[j]))
+					throw new Exception(keywordExc);
+			}
+			colsID[i] = new ColumnIdentifier(bySpace);
+		}
+		if (isKeyword(tbName))
+			throw new Exception(keywordExc);
+		dbms.getUsedDB().addTable(tbName, colsID);
+	}
+
+	private void callUse(String sql) throws Exception {
+		currentUpdateCount = -1;
+		String DBName = sql.split(" ")[1];
+		dbms.setUsedDB(DBName);
+	}
+
+	private void callInsert(String[] sqlSplitted) throws Exception {
+		currentUpdateCount = -1;
+		String tbName = sqlSplitted[0].split(" ")[2];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+		if (tb == null) {
+			throw new Exception(resourceNotFound);
+		}
+		String[] colsNames = extractColumnsNames(sqlSplitted[0]);
+		String[] tempArr = sqlSplitted[0].split("\\s((?i)values)\\s");
+		if (tempArr.length != 2)
+			throw new Exception(keywordExc);
+		tb.insert(new Record(colsNames, extractColumnsNames(tempArr[1]), tb));
+	}
+
+	private void callDelete(String[] sqlSplitted) throws Exception {
+		String tbName = sqlSplitted[0].split(" ")[2];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+		if (tb == null) {
+			currentUpdateCount = -1;
+			throw new Exception(resourceNotFound);
+		}
+		Condition c = null;
+		if (sqlSplitted.length == 2)
+			c = new Condition(sqlSplitted[1], tb);
+		currentUpdateCount = tb.delete(c);
+	}
+
+	private void callUpdate(String[] sqlSplitted) throws Exception {
+		String[] setSplitted = sqlSplitted[0].split("\\s((?i)set)\\s");
+
+		if (setSplitted.length != 2)
+			throw new Exception(keywordExc);
+
+		String[] afterSet = setSplitted[1].split(" , ");
+
+		String[] columnsNames = new String[afterSet.length];
+		String[] values = new String[afterSet.length];
+
+		for (int i = 0; i < afterSet.length; i++) {
+			String[] splittedVals = afterSet[i].split(" = ");
+			columnsNames[i] = splittedVals[0];
+			values[i] = splittedVals[1];
+		}
+		String tbName = sqlSplitted[0].split(" ")[1];
+		Table tb = dbms.getUsedDB().getTable(tbName);
+
+		if (tb == null) {
+			currentUpdateCount = -1;
+			throw new Exception(resourceNotFound);
+		}
+		Condition c = null;
+
+		if (sqlSplitted.length == 2)
+			c = new Condition(sqlSplitted[1], tb);
+
+		currentUpdateCount = tb.update(columnsNames, values, c);
+	}
+
+	private void handleSelectComm(String sql) throws Exception {
+		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
+		if (sqlSplitted.length > 2)
+			throw new SQLException(keywordExc);
+		boolean isValidSelect = (sqlSplitted.length == 2 && sqlSplitted[0]
+				.matches(selectSpecificPat))
+				|| (sqlSplitted.length == 1 && (sql.matches(selectSpecificPat) || sql
+						.matches(selectAllPat)));
+		if (!isValidSelect) {
+			currentResultSet = null;
+			throw new Exception(undifinedSQL);
+		}
+		callSelect(sqlSplitted);
+	}
+
+	// to be called after regex validation
+	private void callSelect(String[] sqlSplitted) throws Exception {
+		String[] fromSplitted = sqlSplitted[0].split("\\s((?i)from)\\s");
+		String tableName = fromSplitted[1];
+		// may through NullPointerException, handled
+		Table tb = dbms.getUsedDB().getTable(tableName);
+		if (tb == null) {
+			currentResultSet = null;
+			throw new Exception(resourceNotFound);
+		}
+		String[] colmsNames = tb.getColNames();
+		Condition c = null;
+		if (sqlSplitted.length == 2) {
+			c = new Condition(sqlSplitted[1], tb);
+			colmsNames = extractColumnsNames(sqlSplitted[0]);
+		}
+		currentResultSet = new JDBCResultSet(tb.select(colmsNames, c), this);
+	}
+
+	// ////////////////////////////////////////////////////////////
 	private void canNotExecuteState() throws SQLException {
 		currentUpdateCount = -1;
 		if (currentResultSet != null) {
@@ -335,10 +464,9 @@ public class JDBCStatement implements Statement {
 		}
 	}
 
-	private static String prepareSQLStatement(String sql) throws SQLException {
-
+	private String prepareSQLStatement(String sql) throws SQLException {
 		if (sql == null || (sql = sql.trim()).equals("")) {
-			// canNotExecuteState();
+			canNotExecuteState();
 			throw new SQLException();
 		}
 		sql = sql.replaceAll("\\*", " * ");
@@ -346,236 +474,121 @@ public class JDBCStatement implements Statement {
 		sql = sql.replaceAll("\\)", " ) ");
 		sql = sql.replaceAll("\\,", " , ");
 		sql = sql.replaceAll("\\=", " = ");
-
 		while (sql.contains("  "))
 			sql = sql.replaceAll("  ", " ");
-
 		return sql.trim();
 	}
 
-	private void handleSelectComm(String sql) throws SQLException {
-		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
-
-		boolean firstCaseValid = sqlSplitted.length == 2
-				&& sqlSplitted[0].matches(selectSpecificPat);
-		
-		boolean secondCaseValid = sqlSplitted.length == 1
-				&& (sql.matches(selectSpecificPat) || sql.matches(selectAllPat));
-
-		boolean isValidSelect = firstCaseValid || secondCaseValid;
-
-		
-		if (isValidSelect) {
-			try {
-				callSelect(sqlSplitted);
-			} catch (NullPointerException e) {
-				currentResultSet = null;
-				throw new SQLException();
-			}
-		} else {
-			currentResultSet = null;
-			throw new SQLException();
-		}
-	}
-
 	// to be called after regex validation
-	private void callSelect(String[] sqlSplitted) throws NullPointerException {
-		
-		System.out.println("SELECT CALLED");
-		
-		String[] fromSplitted = sqlSplitted[0].split("\\s((?i)from)\\s");
-		String tableName = fromSplitted[1];
+	private String[] extractColumnsNames(String string) throws Exception {
 
-		
-		// may through NullPointerException, handled
-		Table tb = dbms.getUsedDB().getTable(tableName);
-
-		if (tb == null) {
-			currentResultSet = null;
-			throw new NullPointerException();
-		}
-		
-		String[] colmsNames = tb.getColNames();
-		Condition c = null;
-		
-		
-
-		if (sqlSplitted.length == 2) {
-			c = new Condition(sqlSplitted[1], tb);
-			colmsNames = extractColumnsNames(sqlSplitted[0]);
-		}
-		currentResultSet = new JDBCResultSet(tb.select(colmsNames, c), this);
-	}
-
-	// to be called after regex validation
-	private String[] extractColumnsNames(String string) {
 		int indexOfOpenPar = string.indexOf('(');
 		int indexOfClosedPar = string.indexOf(')');
+
+		if (indexOfOpenPar < 0 || indexOfClosedPar < 0)
+			throw new Exception(undifinedSQL);
+
 		String toBeSplitted = string.substring(indexOfOpenPar + 1,
 				indexOfClosedPar);
 		return toBeSplitted.trim().split(" , ");
 	}
 
-	private void handleGeneralCommand(String sql) throws SQLException {
-		String[] sqlSplitted = sql.split("\\s((?i)where)\\s");
-		boolean[] hasConditionCase = evaluateMatched(sqlSplitted[0]);
-		boolean[] hasNoConditionCase = evaluateMatched(sql);
-		boolean firstCaseValid = evaluateOR(hasConditionCase) && sqlSplitted.length == 2;
-		boolean secondCaseValid = evaluateOR(hasNoConditionCase) && sqlSplitted.length == 1;
-		boolean isValidStmnt = firstCaseValid || secondCaseValid;
-		if (isValidStmnt) {
-			try {
-				if (hasConditionCase[0] == true || hasNoConditionCase[0] == true) {
-					callUpdate(sqlSplitted);
-				} else if (hasConditionCase[1] == true || hasNoConditionCase[1] == true) {
-					callDelete(sqlSplitted);
-				} else if (hasConditionCase[2] == true || hasNoConditionCase[2] == true) {
-					callInsert(sqlSplitted);
-				} else {
-					currentUpdateCount = -1;
-					throw new SQLException();
-				}
-			} catch (Exception e) {
-				currentUpdateCount = -1;
-				throw new SQLException();
+	private boolean isKeyword(String str) throws NullPointerException {
+		if (str != null) {
+			for (int i = 0; i < keywords.length; i++) {
+				if (str.matches(keywords[i]))
+					return true;
 			}
-		} else {
-			currentUpdateCount = -1;
-			throw new SQLException();
+			return false;
 		}
+		throw new NullPointerException();
 	}
 
-	private void callInsert(String[] sqlSplitted) throws Exception {
-		
-		System.out.println("INSERT CALLED");
-		
-		currentUpdateCount = -1;
-		
-		String tbName = sqlSplitted[0].split(" ")[2];
-		Table tb = dbms.getUsedDB().getTable(tbName);
-		
-		if (tb == null){
-			throw new NullPointerException();
-		}
-		String[] colsNames = extractColumnsNames(sqlSplitted[0]);
-		
-		String[]tempArr =  sqlSplitted[0].split("\\s((?i)values)\\s");
-		String[] values = extractColumnsNames(tempArr[1]);
-	
-		tb.insert(new Record(colsNames, values, tb));
-	}
-
-	private void callDelete(String[] sqlSplitted) throws Exception {
-		System.out.println("DELETE CALLED");
-		
-		String tbName = sqlSplitted[0].split(" ")[2];
-		Table tb = dbms.getUsedDB().getTable(tbName);
-		
-		if (tb == null){
-			currentUpdateCount = -1;
-			throw new NullPointerException();
-		}
-		
-		Condition c = null;
-		if (sqlSplitted.length == 2)
-			c = new Condition(sqlSplitted[1], tb);
-		
-		tb.delete(c);
-	}
-
-	private void callUpdate(String[] sqlSplitted) throws Exception{
-		System.out.println("UPDATE CALLED");
-		
-		String[] setSplitted = sqlSplitted[0].split("\\s((?i)set)\\s");
-		String[] afterSet = setSplitted[1].split(" , ");
-		
-		String[] columnsNames = new String[afterSet.length];
-		String[] values = new String[afterSet.length];
-		
-		for (int i = 0; i < afterSet.length; i++) {
-			String[] splittedVals = afterSet[i].split(" = ");
-			columnsNames[i] = splittedVals[0];
-			values[i] = splittedVals[1];
-		}
-		String tbName = sqlSplitted[0].split(" ")[1];
-		Table tb = dbms.getUsedDB().getTable(tbName);
-		
-		if (tb == null){
-			currentUpdateCount = -1;
-			throw new NullPointerException();
-		}
-		Condition c = null;
-		if (sqlSplitted.length == 2)
-			c = new Condition(sqlSplitted[1], tb);
-		
-		currentUpdateCount = tb.update(columnsNames, values, c);
-	}
-
-	private boolean evaluateOR(boolean[] arr) {
-		int i = 0;
-		boolean val = false;
-		while (i < arr.length)
-			val |= arr[i++];
-		return val;
-	}
-
-	private boolean[] evaluateMatched(String str) {
-		boolean[] toRet = new boolean[3];
-		Arrays.fill(toRet, false);
-
+	private String evaluateMatched(String str) {
 		if (str.matches(updatePat)) {
-			toRet[0] = true;
-			return toRet;
+			return updatePat;
 		} else if (str.matches(deletePat)) {
-			toRet[1] = true;
-			return toRet;
+			return deletePat;
 		} else if (str.matches(insertIntoPat)) {
-			toRet[2] = true;
-			return toRet;
+			return insertIntoPat;
 		} else {
-			return toRet;
+			return null;
 		}
 	}
 
 	public static void main(String[] args) {
+		String ss1 = "create database omar";
+		String ss2 = "use omar";
+		String ss3 = "create table koko (c1 Integer , c2 Varchar , c3 boolean)";
+		String ss4 = "insert into koko (c1 , c2 , c3) values (omar , 10 , koko)";
+		String jj1 = "insert into koko (h1 , h2) values (10, omar , 10)";
 		
-		String ss1 = "create database newDB" ;
-		String ss2 = "use newDB" ;
-		String ss3 = "create table newTb (c1 Integer , c2 Varchar , c3 boolean)" ;
-		String ss4 = "insert into newTb (c1 , c2 , c3) values (10 , 'omar' , true)" ;
-		String ss5 = "insert into newTb (c1 , c3 ) values (20 , true)" ;
-		String ss6 = "insert into newTb (c3 , c2 ) values (false , 'boody')" ;
-		String ss7 = "insert into newTb (c3 , c3 ) values (false , true)" ;
-		String ss8 = "insert into newTb (c2 , c3 ) values ('mariam' , true)" ;
-		String ss9 = "select* from newTb " ;
-		
-		String ss10 = "select from newTb " ;
-		
-		String ss11 = "select (c1, c2) from newTb where c3 = true" ;
-		String ss12 = "delete from newTb where c3 = true" ;
-		Statement s = null;
-		
-		try {
-			 s = new JDBCStatement(new StdDBMS(), null);
-			 s.execute(ss1);
-			 s.execute(ss2);
-			 s.execute(ss3);
-			 s.execute(ss4);
-			 s.execute(ss5);
-			 s.execute(ss6);
-			 s.execute(ss7);
-			 s.execute(ss8);
-			 s.execute(ss9); 
-			
-			 // s.execute(ss10);
+		String ss5 = "insert into koko (c1 , c3 ) values (20 , true)";
+		String ss6 = "insert into newTb (c3 , c2 ) values (false , 'boody')";
+		String ss7 = "insert into newTb (c3 , c3 ) values (false , true)";
+		String ss8 = "insert into newTb (c2 , c3 ) values ('mariam' , true)";
+		String ss9 = "select* from newTb ";
 
-			 s.execute(ss11);
-			 s.execute(ss12);
+		String xx3 = "create table newTb2 (r1 Integer , r2 Varchar , r3 boolean)";
+		String xx4 = "insert into newTb2 (r1 , r2 , r3) values (10 , 'omar' , true)";
+		String xx5 = "insert into newTb2 (r1 , r3 ) values (20 , true)";
+		String xx6 = "insert into newTb2 (r3 , r2 ) values (false , 'boody')";
+		String xx7 = "insert into newTb2 (r3 , r3 ) values (false , true)";
+		String xx8 = "insert into newTb2 (r2 , r3 ) values ('mariam' , true)";
+		String xx9 = "select* from newTb ";
+
+		// String ss10 = "select from newTb ";
+
+		String ss11 = "select (c1, c2) from newTb where c3 = true";
+		String ss12 = "delete from newTb where c3 = true";
+		Statement s = null;
+
+		try {
+			DBMS ddd = new StdDBMS();
+			s = new JDBCStatement(ddd, new JDBCConnection(ddd));
+
+			// s.addBatch(ss1);
+			// s.addBatch(ss2);
+			// s.addBatch(ss3);
+			// s.addBatch(ss4);
+			// s.addBatch(ss5);
+			// s.addBatch(ss6);
+			// s.addBatch(ss7);
+			// s.addBatch(ss8);
+			// s.addBatch(ss9);
+			// s.addBatch(ss11);
+			// s.addBatch(ss12);
+			//
+			// s.addBatch(xx3);
+			// s.addBatch(xx4);
+			// s.addBatch(xx5);
+			// s.addBatch(xx6);
+			// s.addBatch(xx7);
+			// s.addBatch(xx8);
+			// s.addBatch(xx9);
+			//
+			// s.executeBatch();
+
+			s.execute(ss1);
+			s.execute(ss2);
+			s.execute(ss3);
+			s.execute(ss4);
+			System.out.println("EXITS");
+			System.exit(0);
+			
+			s.execute(ss5);
+			s.execute(ss6);
+			s.execute(ss7);
+			s.execute(ss8);
+			s.execute(ss9);
+			// s.execute(ss10);
+			s.execute(ss11);
+			// s.execute(ss12);
 		} catch (Exception e) {
 			System.out.println("LOL!");
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	// ------------------------------------------------------\\

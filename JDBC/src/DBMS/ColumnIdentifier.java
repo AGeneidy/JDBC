@@ -9,30 +9,30 @@ public class ColumnIdentifier {
 
 	}
 
-	public ColumnIdentifier(String[] bySpace) {
-		if (bySpace.length == 2) {
-			columnName = bySpace[0];
+	public ColumnIdentifier(String[] bySpace) throws Exception {
 
-			if (bySpace[1].equalsIgnoreCase("VARCHAR")) {
-				columnType = String.class;
-			} else if (bySpace[1].equalsIgnoreCase("BOOLEAN")) {
-				columnType = Boolean.class;
-			} else if (bySpace[1].equalsIgnoreCase("INTEGER")) {
-				columnType = Integer.class;
-			} else if (bySpace[1].equalsIgnoreCase("FLOAT")) {
-				columnType = Float.class;
-			} else if (bySpace[1].equalsIgnoreCase("DOUBLE")) {
-				columnType = Double.class;
-			} else if (bySpace[1].equalsIgnoreCase("DATE")) {
-				columnType = java.util.Date.class;
-			} else if (bySpace[1].equalsIgnoreCase("TIME")) {
-				columnType = java.util.Date.class;
-			} else {
-				System.out.println("ERROR: THIS TYPE \"" + bySpace[1]
-						+ "\" IS NOT SUPPORTED");
-			}
+		if (bySpace.length != 2) {
+			throw new Exception("ERROR: CANNOT IDENTIFY COLUMN TYPE");
+		}
+
+		columnName = bySpace[0];
+		if (bySpace[1].equalsIgnoreCase("VARCHAR")) {
+			columnType = String.class;
+		} else if (bySpace[1].equalsIgnoreCase("BOOLEAN")) {
+			columnType = Boolean.class;
+		} else if (bySpace[1].equalsIgnoreCase("INTEGER")) {
+			columnType = Integer.class;
+		} else if (bySpace[1].equalsIgnoreCase("FLOAT")) {
+			columnType = Float.class;
+		} else if (bySpace[1].equalsIgnoreCase("DOUBLE")) {
+			columnType = Double.class;
+		} else if (bySpace[1].equalsIgnoreCase("DATE")) {
+			columnType = java.util.Date.class;
+		} else if (bySpace[1].equalsIgnoreCase("TIME")) {
+			columnType = java.util.Date.class;
 		} else {
-			System.out.println("ERROR: CANNOT IDENTIFY COLUMN TYPE");
+			throw new Exception("ERROR: THIS TYPE \"" + bySpace[1]
+					+ "\" IS NOT SUPPORTED");
 		}
 
 	}

@@ -507,7 +507,12 @@ public class SQLParser {
 					String type = ff.nextToken();
 					if (verifyName(name)) {
 						String[] del = { name.trim(), type.trim() };
-						ids[i++] = new ColumnIdentifier(del);
+						try {
+							ids[i++] = new ColumnIdentifier(del);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					} else {
 						System.out.println("ERROR: WRONG INPUT");
 						return null;
