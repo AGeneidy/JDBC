@@ -24,10 +24,9 @@ import DBMS.*;
 public class JDBCStatement implements Statement {
 
 	private static String keywordExc = "ERROR : YOU CAN NOT USE A KEYWORD AS AN ATTRIBUTE NAME";
-	
 	private static String resourceNotFound = "ERROR : THIS RESOURCE IS NOT FOUND";
-	
 	private static String undifinedSQL = "ERROR : THIS IS NOT A SQL STATEMENT";
+	private static String wrongIntialExc = "Error : Wrong Statement initialization";
 
 	private static String stringPat = "(.*)";
 
@@ -79,7 +78,7 @@ public class JDBCStatement implements Statement {
 	/**
 	 * the connection that created this statement
 	 */
-	private JDBCConnection connection = null;
+	private Connection connection = null;
 
 	/**
 	 * A queue to hold the SQL queries in order (FIFO)
@@ -106,9 +105,9 @@ public class JDBCStatement implements Statement {
 	 * 
 	 */
 
-	public JDBCStatement(DBMS dbms, JDBCConnection c) throws SQLException {
+	public JDBCStatement(DBMS dbms, Connection c) throws SQLException {
 		if (dbms == null || c == null)
-			throw new SQLException("Error : Wrong Statement initialization");
+			throw new SQLException(wrongIntialExc);
 
 		this.connection = c;
 		this.dbms = dbms;
@@ -359,6 +358,7 @@ public class JDBCStatement implements Statement {
 		}
 		if (isKeyword(tbName))
 			throw new Exception(keywordExc);
+		
 		dbms.getUsedDB().addTable(tbName, colsID);
 	}
 
@@ -472,7 +472,7 @@ public class JDBCStatement implements Statement {
 	private String prepareSQLStatement(String sql) throws SQLException {
 		if (sql == null || (sql = sql.trim()).equals("")) {
 			canNotExecuteState();
-			throw new SQLException();
+			throw new SQLException(undifinedSQL);
 		}
 		sql = sql.replaceAll("\\*", " * ");
 		sql = sql.replaceAll("\\(", " ( ");
