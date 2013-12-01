@@ -23,8 +23,10 @@ import DBMS.*;
  */
 public class JDBCStatement implements Statement {
 
-	private String keywordExc = "ERROR : YOU CAN NOT USE A KEYWORD AS AN ATTRIBUTE NAME";
+	private static String keywordExc = "ERROR : YOU CAN NOT USE A KEYWORD AS AN ATTRIBUTE NAME";
+	
 	private static String resourceNotFound = "ERROR : THIS RESOURCE IS NOT FOUND";
+	
 	private static String undifinedSQL = "ERROR : THIS IS NOT A SQL STATEMENT";
 
 	private static String stringPat = "(.*)";
@@ -124,11 +126,12 @@ public class JDBCStatement implements Statement {
 	 * If the statement was an UPDATE, INSERT, DELETE, USE or CRETAE statement,
 	 * you can retrieve the affected rows count by calling getUpdateCount()
 	 */
+
 	@Override
 	public boolean execute(String sql) throws SQLException {
 		sql = prepareSQLStatement(sql);
 		String isSelect = sql.split(" ")[0];
-		
+
 		if (isSelect.equalsIgnoreCase("select")) {
 			executeQuery(sql);
 			return true;
@@ -291,6 +294,7 @@ public class JDBCStatement implements Statement {
 	/**
 	 * Retrieves the current result as a ResultSet object.
 	 */
+
 	@Override
 	public ResultSet getResultSet() throws SQLException {
 		return currentResultSet;
@@ -300,6 +304,7 @@ public class JDBCStatement implements Statement {
 	 * Retrieves the current result as an update count; if the result is a
 	 * ResultSet object or there are no more results, -1 is returned.
 	 */
+
 	@Override
 	public int getUpdateCount() throws SQLException {
 		return currentUpdateCount;
@@ -522,7 +527,7 @@ public class JDBCStatement implements Statement {
 		String ss3 = "create table koko (c1 Integer , c2 Varchar , c3 boolean)";
 		String ss4 = "insert into koko (c1 , c2 , c3) values (omar , 10 , koko)";
 		String jj1 = "insert into koko (h1 , h2) values (10, omar , 10)";
-		
+
 		String ss5 = "insert into koko (c1 , c3 ) values (20 , true)";
 		String ss6 = "insert into newTb (c3 , c2 ) values (false , 'boody')";
 		String ss7 = "insert into newTb (c3 , c3 ) values (false , true)";
@@ -575,7 +580,7 @@ public class JDBCStatement implements Statement {
 			s.execute(ss4);
 			System.out.println("EXITS");
 			System.exit(0);
-			
+
 			s.execute(ss5);
 			s.execute(ss6);
 			s.execute(ss7);
