@@ -102,7 +102,7 @@ public class TestUnit {
 		query = "use C123";
 		s.execute(query);
 		s.execute("insert into newTb2 (r1 , r2 , r3) values (10 , 'omar' , true)");
-		assertEquals(" inserted", not(s.getTestString()));
+		assertEquals("inserted", s.getTestString());
 		s.setTestString(null);
 
 	}
