@@ -8,6 +8,7 @@ import DBMS.Record;
 import DBMS.RecordSet;
 import DBMS.StdDBMS;
 import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.*;
 
 public class TestUnit {
 	JDBCResultSet resSet;
@@ -31,7 +32,6 @@ public class TestUnit {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	@Test
@@ -44,9 +44,9 @@ public class TestUnit {
 			s = new JDBCStatement(ddd, new JDBCConnection(ddd));
 			s.execute(query);
 			if (s != null)
-				assertNotEquals("DataBase Created", s.getTestString());
+				assertEquals("DataBase Created", not(s.getTestString()));
 			else
-				assertNotEquals("1", "2");
+				assertEquals("1", not("2"));
 			File file = new File("E:\\Databases\\A123");
 			file.deleteOnExit();
 			// file.deleteOnExit();
@@ -102,7 +102,7 @@ public class TestUnit {
 		query = "use C123";
 		s.execute(query);
 		s.execute("insert into newTb2 (r1 , r2 , r3) values (10 , 'omar' , true)");
-		assertNotEquals(" inserted", s.getTestString());
+		assertEquals(" inserted", not(s.getTestString()));
 		s.setTestString(null);
 
 	}
