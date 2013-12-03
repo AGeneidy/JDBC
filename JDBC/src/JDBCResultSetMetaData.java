@@ -6,6 +6,12 @@ import DBMS.RecordSet;
 public class JDBCResultSetMetaData implements ResultSetMetaData {
 	private RecordSet recordSet;
 
+	private static boolean isAutoIncrement = false;
+	private static int isNullable = 0;
+	private static boolean isReadOnly = false;
+	private static boolean isSearchable = false;
+	private static boolean isWritable = true;
+
 	/**
 	 * constructor
 	 */
@@ -70,7 +76,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public boolean isAutoIncrement(int column) throws SQLException {
-		return false;
+		return isAutoIncrement;
 	}
 
 	/**
@@ -78,7 +84,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public int isNullable(int column) throws SQLException {
-		return 0;
+		return isNullable;
 	}
 
 	/**
@@ -86,7 +92,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public boolean isReadOnly(int column) throws SQLException {
-		return false;
+		return isReadOnly;
 	}
 
 	/**
@@ -94,7 +100,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public boolean isSearchable(int column) throws SQLException {
-		return false;
+		return isSearchable;
 	}
 
 	/**
@@ -103,7 +109,7 @@ public class JDBCResultSetMetaData implements ResultSetMetaData {
 	 */
 	@Override
 	public boolean isWritable(int column) throws SQLException {
-		return true;
+		return isWritable;
 	}
 
 	// ------------------------------------------------------\\
