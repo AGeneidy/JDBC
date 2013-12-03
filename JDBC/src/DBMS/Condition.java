@@ -15,7 +15,6 @@ public class Condition {
 		if(condition.startsWith("not "))	condition = condition.replaceFirst("not", "!");
 		if(condition.startsWith("NOT "))	condition = condition.replaceFirst("NOT", "!");
 		condition = condition.replace(" ", "");
-		System.out.println(condition);
 		table = t;
 	}
 
