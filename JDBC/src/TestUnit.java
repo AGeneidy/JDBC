@@ -74,9 +74,15 @@ public class TestUnit {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
 		query = "use C123";
+		
 		s.execute(query);
+
 		assertEquals("used", s.getTestString());
+		File file1 = new File("E:\\Databases\\C123\\newTb2");
+//			s.execute("create table newTb2 (r1 Integer , r2 Varchar , r3 boolean)");
+
 		s.setTestString(null);
 	}
 
@@ -160,6 +166,9 @@ public class TestUnit {
 		s.execute("select (c1, c2) from newTb2 where c3 = true");
 		assertEquals("selected", s.getTestString());
 		s.setTestString(null);
+		file = new File("E:\\Databases\\C123");
+		file.deleteOnExit();
+		
 
 	}
 
