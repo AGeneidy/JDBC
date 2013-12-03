@@ -8,8 +8,14 @@ public class Condition {
 	Table table;
 
 	public Condition(String cond, Table t) {
-		condition = cond.replace(" ", "").replace("AND", "&").replace("OR", "|").replace("NOT", "!")
-				.replace("and", "&").replace("or", "|").replace("not", "!");
+		condition = cond.replace(" AND ", "&").replace(" OR ", "|").replace(" NOT ", "!")
+				.replace(" and ", "&").replace(" or ", "|").replace(" not ", "!")
+				.replace(")AND(", ")&(").replace(")OR(", ")|(").replace("NOT(", "!(")
+				.replace(")and(", ")&(").replace(")or(", ")|(").replace("not(", "!(");
+		if(condition.startsWith("not "))	condition = condition.replaceFirst("not", "!");
+		if(condition.startsWith("NOT "))	condition = condition.replaceFirst("NOT", "!");
+		condition = condition.replace(" ", "");
+		System.out.println(condition);
 		table = t;
 	}
 

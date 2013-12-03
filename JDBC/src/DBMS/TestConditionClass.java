@@ -26,7 +26,7 @@ public class TestConditionClass {
 	
 	
 	public static void testSelect(Table tbl) {
-		Condition cond = new Condition("((   ((courseCode= 10))) AND ((courseName =\'math\'))) |  courseCode =maxNumOfSt", tbl);
+		Condition cond = new Condition("not((   ((courseCode= 10))) AND ((courseName =\'math\'))) |  courseCode =maxNumOfSt", tbl);
 		RecordSet rs = tbl.select(new String[]{"courseName"}, cond);
 		for (Record r : rs) {
 			System.out.println(r);
