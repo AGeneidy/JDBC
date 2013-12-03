@@ -99,6 +99,15 @@ public class JDBCStatement implements Statement {
 	 * A DBMS delegate to execute the actual SQL commands
 	 */
 	private DBMS dbms;
+	private String testString;
+
+	public String getTestString() {
+		return testString;
+	}
+
+	public void setTestString(String testString) {
+		this.testString = testString;
+	}
 
 	/**
 	 * Constructor
@@ -173,10 +182,13 @@ public class JDBCStatement implements Statement {
 			sql = prepareSQLStatement(sql);
 			if (sql.matches(usePat)) {
 				callUse(sql);
+				testString = "used";
 			} else if (sql.matches(createDatabasePat)) {
 				callCreateDB(sql);
+				testString = "DataBase Created";
 			} else if (sql.matches(createTablePat)) {
 				callCreateTable(sql);
+				testString = "Table Created";
 			} else {
 				handleGeneralCommand(sql);
 			}
@@ -328,10 +340,13 @@ public class JDBCStatement implements Statement {
 		String notNull = splitMatch != null ? splitMatch : origMatch;
 		if (notNull.equals(updatePat)) {
 			callUpdate(sqlSplitted);
+			testString = "updated";
 		} else if (notNull.equals(deletePat)) {
 			callDelete(sqlSplitted);
+			testString = "deleted";
 		} else if (notNull.equals(insertIntoPat)) {
 			callInsert(sqlSplitted);
+			testString = "inserted";
 		}
 	}
 
@@ -439,6 +454,7 @@ public class JDBCStatement implements Statement {
 			throw new Exception(undifinedSQL);
 		}
 		callSelect(sqlSplitted);
+		testString = "selected";
 	}
 
 	// to be called after regex validation
